@@ -3,34 +3,39 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"project/database"
 	"project/models"
+	"project/validators"
 )
 
-// GetAllAuthors retrieves all authors
+func GetAllAuthors(w http.ResponseWriter, r *http.Request) {	
 
-func getAll(w http.ResponseWriter, r *http.Request) {	
-	db := database.ConnectDatabase()
-	result, err := db.Query("select * from authors");
+	author := &models.Author{}
 
-	p := models.Author{}
-	authors := []models.Author{}
+	authorsReturn  := author.GetAll()
 
-	for result.Next(){
-		var Id, Age        int
-		var FirstName, LastName, Country, Description string
-		err = result.Scan(&Id, &FirstName, &LastName, &Description, &Country, &Age)
-		if err != nil {
-			panic(err.Error())
-		}
-		p.Id = Id
-		p.FirstName = FirstName
-		p.LastName = LastName
-		p.Country = Country
-		p.Description = Description
-		p.Age = Age
-		authors = append(authors, p)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(authorsReturn)
+}
+
+func CreateAuthor(w http.ResponseWriter, r *http.Request) {
+
+	var result map[string]interface{}
+
+	err := json.NewDecoder(r.Body).Decode(&result)
+	if err != nil {
+		panic(err)
 	}
 
-	json.NewEncoder(w).Encode(p)
+	firstName :=  validators.CheckStringField(result, "FirstName");
+	lastName :=  validators.CheckStringField(result, "LastName");
+	country :=  validators.CheckStringField(result, "Country");
+	description := validators.CheckStringField(result, "Description");
+	age := validators.CheckIntField(result, "Age")
+
+	author := &models.Author{}
+
+	authorReturn, _  := author.Create(firstName, lastName, country, description, age)
+
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(authorReturn)
 }

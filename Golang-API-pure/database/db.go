@@ -14,7 +14,7 @@ func ConnectDatabase() *sql.DB {
 			port     = 5432
 			user     = "root"
 			password = "password"
-			dbname   = "library"
+			dbname   = "root"
 	)
 
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -24,7 +24,7 @@ func ConnectDatabase() *sql.DB {
 	if err != nil {
 			log.Fatal(err)
 	}
-	defer db.Close()
+	//defer db.Close()
 
 	err = db.Ping()
 	if err != nil {
