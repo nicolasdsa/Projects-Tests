@@ -1,6 +1,10 @@
 package models
 
-import "project/database"
+import (
+	"fmt"
+	"project/database"
+	"strings"
+)
 
 type Author struct {
 	Id				 int `json:"Id"`
@@ -67,3 +71,30 @@ func (a *Author) GetAll() ([]Author) {
 
 	return authors
 }
+
+
+func (a *Author) UpdateAuthor(authorID int, result map[string]interface{}) {
+	db := database.ConnectDatabase()
+	updateStmt := "UPDATE authors SET"
+	var params []interface{}
+	i := 1
+	for key, value := range result {
+			updateStmt += fmt.Sprintf(" %s = $%d,", key, i)
+			params = append(params, value)
+			i++
+	}
+	updateStmt = strings.TrimSuffix(updateStmt, ",") + " WHERE Id = $1"
+	params = append([]interface{}{authorID}, params...)
+	stmt, err := db.Prepare(updateStmt)
+	if err != nil {
+			panic(err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(params...)
+	if err != nil {
+			panic(err)
+	}
+	defer db.Close()
+}
+
