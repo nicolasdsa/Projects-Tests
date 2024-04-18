@@ -9,14 +9,16 @@ import (
 func Validate(elements map[string]interface{}, rules map[string]string) error {
 	for field, rule := range rules {
 		val, exists := elements[field]
-		if !exists {
+		if !exists && !isNullable(rule) {
 			return fmt.Errorf("Field '%s' is missing", field)
 		}
 
-		rules := strings.Split(rule, "|")
-		for _, r := range rules {
-			if err := applyRule(field, val, r); err != nil {
-				return err
+		if exists {
+			rules := strings.Split(rule, "|")
+			for _, r := range rules {
+				if err := applyRule(field, val, r); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -30,6 +32,8 @@ func applyRule(field string, value interface{}, rule string) error {
 
 	parts := strings.Split(rule, ":")
 	switch parts[0] {
+	case "nullable":
+		return nil
 	case "required":
 		if value == nil {
 			return fmt.Errorf("Field '%s' is required", field)
@@ -55,6 +59,9 @@ func applyRule(field string, value interface{}, rule string) error {
 			return fmt.Errorf("Field '%s' must be at most %s characters long", field, parts[1])
 		}
 	case "string":
+		if value == "" {
+			return fmt.Errorf("Field '%s' cannot be empty", field)
+		}
 		if _, ok := value.(string); !ok {
 			return fmt.Errorf("Field '%s' must be a string", field)
 		}
@@ -66,4 +73,8 @@ func applyRule(field string, value interface{}, rule string) error {
 		return fmt.Errorf("Unknown validation rule '%s' for field '%s'", parts[0], field)
 	}
 	return nil
+}
+
+func isNullable(rule string) bool {
+	return strings.Contains(rule, "nullable")
 }

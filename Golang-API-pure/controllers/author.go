@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"project/models"
 	"project/validators"
+	"strconv"
 )
 
 func GetAllAuthors(w http.ResponseWriter, r *http.Request) {	
@@ -43,11 +44,7 @@ func CreateAuthor(w http.ResponseWriter, r *http.Request) {
 			"error": err.Error(),
 		})
 		return
-	} else {
-		fmt.Println("Validation successful!")
 	}
-
-	
 	author := &models.Author{}
 
 	firstName := result["FirstName"].(string)
@@ -63,19 +60,54 @@ func CreateAuthor(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateAuthor(w http.ResponseWriter, r *http.Request) {
-	//TODO
-	// var result map[string]interface{}
+	
 	var result map[string]interface{}
+
 	err := json.NewDecoder(r.Body).Decode(&result)
 	if err != nil {
 		panic(err)
 	}
+	idStr := r.URL.Path[len("/update/"):]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"error": "Invalid ID",
+		})
+		return
+	}
 
-	/*authorID := validators.CheckIntField(result, "AuthorID")
+	resultRules := result
+	resultRules["id"] = id
+
+	rules := map[string]string{
+		"Age":        "nullable|int",
+		"FirstName":  "nullable|string",
+		"LastName":   "nullable|string",
+		"Country":    "nullable|string",
+		"Description": "nullable|string",
+		"id":         "required|int",
+	}
+
+	err = validators.Validate(resultRules, rules)
+
+	if err != nil {
+		fmt.Println("Validation failed:", err)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
 	author := &models.Author{}
 
-	//authorReturn, _ := author.UpdateAuthor(authorID, result)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(authorReturn)*/
+	authorReturn, err := author.UpdateAuthor(id, result)
+	if err != nil {
+		fmt.Println("Update failed:", err)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
 
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(authorReturn)
 }

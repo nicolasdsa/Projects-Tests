@@ -7,8 +7,13 @@ import (
 )
 
 func CarregaRotas() {
-	http.HandleFunc("/insert", func(w http.ResponseWriter, r *http.Request) {
-    middlewares.MethodNotAllowedHandler(http.HandlerFunc(controllers.CreateAuthor)).ServeHTTP(w, r)
+	http.HandleFunc("/update/", func(w http.ResponseWriter, r *http.Request) {
+    middlewares.MethodNotAllowedHandler(http.HandlerFunc(controllers.UpdateAuthor)).ServeHTTP(w, r)
 })
-	http.HandleFunc("/getAll", controllers.GetAllAuthors)
+	http.HandleFunc("/insert", func(w http.ResponseWriter, r *http.Request) {
+    middlewares.MethodNotAllowedHandler(http.HandlerFunc(controllers.GetAllAuthors)).ServeHTTP(w, r)
+})
+http.HandleFunc("/getAll", func(w http.ResponseWriter, r *http.Request) {
+	middlewares.MethodNotAllowedHandler(http.HandlerFunc(controllers.GetAllAuthors)).ServeHTTP(w, r)
+})
 }

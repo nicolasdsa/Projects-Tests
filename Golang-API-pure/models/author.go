@@ -73,28 +73,45 @@ func (a *Author) GetAll() ([]Author) {
 }
 
 
-func (a *Author) UpdateAuthor(authorID int, result map[string]interface{}) {
+func (a *Author) UpdateAuthor(authorID int, result map[string]interface{}) (*Author, error) {
 	db := database.ConnectDatabase()
 	updateStmt := "UPDATE authors SET"
 	var params []interface{}
-	i := 1
+	i := 2 	
 	for key, value := range result {
-			updateStmt += fmt.Sprintf(" %s = $%d,", key, i)
-			params = append(params, value)
-			i++
+		updateStmt += fmt.Sprintf(" %s = $%d,", key, i)
+		params = append(params, value)
+		i++
 	}
 	updateStmt = strings.TrimSuffix(updateStmt, ",") + " WHERE Id = $1"
 	params = append([]interface{}{authorID}, params...)
 	stmt, err := db.Prepare(updateStmt)
 	if err != nil {
-			panic(err)
+		return nil, err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(params...)
 	if err != nil {
-			panic(err)
+		return nil, err
 	}
+
+	// Retrieve the updated author
+	updatedAuthor := &Author{}
+	err = db.QueryRow("SELECT Id, FirstName, LastName, Description, Country, Age FROM authors WHERE Id = $1", authorID).Scan(
+		&updatedAuthor.Id,
+		&updatedAuthor.FirstName,
+		&updatedAuthor.LastName,
+		&updatedAuthor.Description,
+		&updatedAuthor.Country,
+		&updatedAuthor.Age,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	defer db.Close()
+
+	return updatedAuthor, nil
 }
 
